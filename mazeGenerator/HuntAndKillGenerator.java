@@ -43,6 +43,15 @@ public class HuntAndKillGenerator implements MazeGenerator {
 				neighbourDirs.add(i);
 			}
 		}
+		if (start.tunnelTo != null) {
+			//Cell is a tunnel
+			if(!start.tunnelTo.isVisited) {
+				visited.add(start.tunnelTo);
+				carve(start.tunnelTo);
+			}
+		} 
+		else if (neighbourDirs.size() > 0) {
+			//Normal cell
 		if (neighbourDirs.size() > 0) {
 			for (int i = 0; i < start.neigh.length; i++) {
 				if (start.neigh[i] != null && !start.neigh[i].isVisited) {
@@ -66,6 +75,7 @@ public class HuntAndKillGenerator implements MazeGenerator {
 				}
 			}
 
+		}
 		}
 	}
 
