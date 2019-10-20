@@ -2,6 +2,8 @@ package mazeGenerator;
 
 import java.io.Console;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
@@ -10,7 +12,7 @@ import maze.Maze;
 
 public class HuntAndKillGenerator implements MazeGenerator {
 
-	ArrayList<Cell> visited;
+	ArrayList<Cell> visited = new ArrayList<Cell>();
 	Random r = new Random();
 	Maze m;
 
@@ -25,54 +27,56 @@ public class HuntAndKillGenerator implements MazeGenerator {
 		Cell start = maze.entrance;
 		visited.add(start);
 		this.m = maze;
-
-		carve(start);
-		hunt(m);
+		
+		while(visited.size() > 0) {
+		carve(visited.get(0));
+		//hunt(m);
+		}
 	}
 
 	private void carve(Cell start) {
 		// TODO Auto-generated method stub
+		visited.remove(start);
+		List<Integer> neighbourDirs = new ArrayList<Integer>();
 		start.isVisited = true;
-		int count = 0;
-		for(int i = 0; i < start.neigh.length; i++) {
-			if(start.neigh[i] != null && !start.neigh[i].isVisited) {
-				//Count the total unvisited neighbours for this cell.
-				count++;
-				//start.neighbours.add(e)
+		for (int i = 0; i < start.neigh.length; i++) {
+			if (start.neigh[i] != null && !start.neigh[i].isVisited) {
+				// Count the total unvisited neighbours for this cell.
+				neighbourDirs.add(i);
 			}
 		}
-		
-		if(count > 0) {
-			//If tthis cell has neighbours
-		int neighbours[] = new int[count];
-		//Generate a random number aka. random neighbour
-		int randomNeighbour = r.nextInt(count);
-		
-		//Reset count for reuse
-		count = 0;
-		for(int i = 0; i < start.neigh.length; i++) {
-			if(start.neigh[i] != null && !start.neigh[i].isVisited)
-				//Add direction of unvisited neighbour to neighbour[] array. This can be improved...
-			neighbours[count++] = i;
+		if (neighbourDirs.size() > 0) {
+			for (int i = 0; i < start.neigh.length; i++) {
+				if (start.neigh[i] != null && !start.neigh[i].isVisited) {
+					if (m.map[start.r + Maze.deltaR[i]][start.c + Maze.deltaC[i]] != null)
+						start.neighbours.put(i, m.map[start.r + Maze.deltaR[i]][start.c + Maze.deltaC[i]]);
+				}
+			}
+
+			int totalNeigh = neighbourDirs.size();
+			Collections.shuffle(neighbourDirs);
 			
+			// If there are neighbours. carve wall to random neighbour selected above
+			for (int i = 0; i < totalNeigh; i++) {
+
+				if (start.neighbours.get(neighbourDirs.get(i)) != null) {
+					if (!start.neighbours.get(neighbourDirs.get(i)).isVisited) {
+						start.wall[neighbourDirs.get(i)].present = false;
+						carve(start.neighbours.get(neighbourDirs.get(i)));
+						visited.add(start.neighbours.get(neighbourDirs.get(i)));
+					}
+				}
+			}
+
 		}
-		
-		//If there are neighbours. carve wall to random neighbour selected above
-		if(neighbours.length > 0) {
-			
-		start.wall[neighbours[randomNeighbour]].present = false;
-		//recursive call to carve the new neighbour
-		carve(m.map[start.r + Maze.deltaR[neighbours[randomNeighbour]]][start.c + Maze.deltaC[neighbours[randomNeighbour]]]);
-		}
-	}
 	}
 
 	private void hunt(Maze m) {
-		for (int i = m.sizeC; i >= 0; i--) {
-			for(int j = m.sizeC; j >= 0; j--) {
-			if (!m.map[i][j].isVisited) {
-				carve(m.map[i][j]);
-			}
+		for (int i = m.sizeC - 1; i >= 0; i--) {
+			for (int j = m.sizeC - 1; j >= 0; j--) {
+				if (!m.map[i][j].isVisited) {
+					carve(m.map[i][j]);
+				}
 			}
 		}
 	}

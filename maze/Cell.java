@@ -8,7 +8,13 @@ package maze;
  * The solvers require that all neighbor cell objects are assigned correctly
  * and same wall object are shared by two cell objects next to the wall.
  */
+
+import java.util.HashMap;
+
 public class Cell {
+	public HashMap<Integer, Cell> neighbours = new HashMap<Integer, Cell>();
+	
+	public boolean isVisited = false;
 	/**
 	 * row coordinate
 	 */
