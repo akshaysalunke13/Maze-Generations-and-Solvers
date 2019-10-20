@@ -1,11 +1,9 @@
 package mazeGenerator;
 
-import java.io.Console;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Stack;
 
 import maze.Cell;
 import maze.Maze;
@@ -27,10 +25,10 @@ public class HuntAndKillGenerator implements MazeGenerator {
 		Cell start = maze.entrance;
 		visited.add(start);
 		this.m = maze;
-		
-		while(visited.size() > 0) {
-		carve(visited.get(0));
-		//hunt(m);
+
+		while (visited.size() > 0) {
+			carve(visited.get(0));
+			// hunt(m);
 		}
 	}
 
@@ -55,7 +53,7 @@ public class HuntAndKillGenerator implements MazeGenerator {
 
 			int totalNeigh = neighbourDirs.size();
 			Collections.shuffle(neighbourDirs);
-			
+
 			// If there are neighbours. carve wall to random neighbour selected above
 			for (int i = 0; i < totalNeigh; i++) {
 
@@ -71,6 +69,7 @@ public class HuntAndKillGenerator implements MazeGenerator {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private void hunt(Maze m) {
 		for (int i = m.sizeC - 1; i >= 0; i--) {
 			for (int j = m.sizeC - 1; j >= 0; j--) {
