@@ -1,170 +1,193 @@
 package mazeSolver;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+
 import maze.Cell;
 import maze.Maze;
 
 /**
- * Implements the recursive backtracking maze solving algorithm.
+ * Recursive Backtracker to solve maze.
  */
 public class RecursiveBacktrackerSolver implements MazeSolver {
-  
-   HashMap<String, Node> visited = new HashMap<String,Node>();
-   int pathLength = 0;
-   
-  
+
+	HashMap<String, Node> visitedNodes = new HashMap<String, Node>();
+	int solutionLength = 0;
+
+	@Override
 	public void solveMaze(Maze maze) {
-	   
-      /* each list to store nodes, frontiers, and visited nodes */
-      HashMap<String, Node> nodes = new HashMap<String,Node>();
-      
-      for(int i = 0; i < maze.sizeR; i++){        
-            for(int j = 0; j < maze.sizeC; j++){
-               Node newNode = new Node(maze.map[i][j]);
-               nodes.put(newNode.getKey(), newNode);
-            }
-         }
 
-      /* Next, set connection for each connected cells. A special case if the maze is a tunnel maze.*/
-      for(Node node : nodes.values()){
-         /* Creating new edge for each direction */
-         for(int h = 0; h < maze.NUM_DIR; h++){ 
-            if(node.getCell().neigh[h] != null){
-               if(node.getCell().wall[h].present == false && node.getCell().wall[h].drawn == false){
-                  Node toNode = nodes.get("[" + node.getCell().neigh[h].c + "," + node.getCell().neigh[h].r + "]");
-                  if(toNode != null)
-                     node.setNeighbour(toNode, h);
-               }
-            }
-         }
-         if(maze.type == 1){ // Handling tunnel.
-            if(node.getCell().tunnelTo != null){
-               Node tunnelDest = nodes.get("[" + node.getCell().tunnelTo.c + "," + node.getCell().tunnelTo.r + "]");
-               node.setNeighbour(tunnelDest, 6);
-            }
-         }
-      }
+		// List to store neighbour nodes
+		HashMap<String, Node> nodes = new HashMap<String, Node>();
 
-      // Find entrance node and start
-      Node currNode = nodes.get("[" + maze.entrance.c + "," + maze.entrance.r + "]");
-      Node endNode = nodes.get("[" + maze.exit.c + "," + maze.exit.r + "]");
-      
-      Random random = new Random();
+		// Map all maze cells into nodes
+		for (int i = 0; i < maze.sizeR; i++) {
+			for (int j = 0; j < maze.sizeC; j++) {
+				Node newNode = new Node(maze.map[i][j]);
+				//Put newly created node in arraylist
+				nodes.put(newNode.getKey(), newNode);
+			}
+		}
 
-      // Starts loop
-      while(currNode != endNode){
-         maze.drawFtPrt(currNode.getCell());
-         
-         // If Cell is a tunnel and not visited
-         if(currNode.getNeighbour(6) != null && !visited.containsKey(currNode.getNeighbour(6).getKey())){
-            currNode.getNeighbour(6).setPrevious(currNode);
-            visited.put(currNode.getKey(), currNode);
-            
-            currNode = currNode.getNeighbour(6);
-         }
-         else{
-            // Checks if there is available nodes to visit.
-            boolean allVisited = true;
-            for(int i = 0; i<7; i++){
-               if(currNode.getNeighbour(i) != null){
-                  if(!visited.containsKey(currNode.getNeighbour(i).getKey())){
-                     allVisited = false;
-                  }
-               }
-            }
-            // If all nodes are visited, go back a step
-            if(allVisited){
-               visited.put(currNode.getKey(), currNode);
-               currNode = currNode.getPrevious();
-            }
-            // If there are available nodes to visit.
-            else{
-               boolean able = false;
-               // Starts a loop until available nodes to visit is visited.
-               while(!able){ 
-                  // Get available direction
-                  ArrayList<Integer> avb = new ArrayList<Integer>();
-                  for(int i = 0 ; i < maze.NUM_DIR ; i++){
-                     if(currNode.neighbour[i] != null){
-                        if(!visited.containsKey(currNode.neighbour[i].getKey())){
-                           avb.add(i);
-                        }
-                     }
-                  }                    
-                  random = new Random();
-                  int randomDir;
-                  randomDir = random.nextInt(avb.size());
-                  int dir = avb.get(randomDir);
+		//Iterate over all cells
+		for (Node node : nodes.values()) {
+			/* Creating new edge for each direction */
+			for (int i = 0; i < Maze.NUM_DIR; i++) {
+				// if neighbour exists in direction
+				if (node.getCell().neigh[i] != null) {
+					
+					if (node.getCell().wall[i].present == false && node.getCell().wall[i].drawn == false) {
+						//Get key of neighbour to current node
+						String key = "[" + node.getCell().neigh[i].c + "," + node.getCell().neigh[i].r + "]";
+						Node tempNode = nodes.get(key);
+						if (tempNode != null)
+							node.setNeighbour(tempNode, i);
+					}
+				}
+			}
+			// If maze is of type tunnel
+			if (maze.type == Maze.TUNNEL) {
+				//If this node is a tunnel
+				if (node.getCell().tunnelTo != null) {
+					Node tunnelEnd = nodes.get("[" + node.getCell().tunnelTo.c + "," + node.getCell().tunnelTo.r + "]");
+					node.setNeighbour(tunnelEnd, 6);
+				}
+			}
+		}
 
-                  if(currNode.getNeighbour(dir) != null){
-                     if(!visited.containsKey(currNode.getNeighbour(dir).getKey())){
-                        Node nextNode = nodes.get(currNode.getNeighbour(dir).getKey());
-                        nextNode.setPrevious(currNode);
-                        visited.put(currNode.getKey(), currNode);
-                        currNode = nextNode;
-                        able = true;
-                     }
-                  }
-                  
-               }
-            }
-         }
-      }
-      // Draw the exit node and add it to visited.
-      maze.drawFtPrt(currNode.getCell());
-      visited.put(currNode.getKey(), currNode);
-      // Count the path length
-      currNode.countPath();
-      System.out.println("Path length of the solution is " + pathLength);
+		// Initialise start and end for maze
+		Node currentNode = nodes.get("[" + maze.entrance.c + "," + maze.entrance.r + "]");
+		//
+		Node endNode = nodes.get("[" + maze.exit.c + "," + maze.exit.r + "]");
+
+		Random random = new Random();
+
+		// loop until we reach the end
+		while ( currentNode != endNode ) {
+			
+			maze.drawFtPrt(currentNode.getCell());
+
+			// If this cell has a tunnel and is not visited
+			if (currentNode.getNeighbour(6) != null && !visitedNodes.containsKey(currentNode.getNeighbour(6).getKey())) {
+				//set tunnel ends previous as the current cell
+				currentNode.getNeighbour(6).setPrevious(currentNode);
+				visitedNodes.put(currentNode.getKey(), currentNode);
+				
+				//Move to next cell.
+				currentNode = currentNode.getNeighbour(6);
+			} else {
+				// Check for unvisited neighbours
+				boolean visited = true;
+				for (int i = 0; i < 7; i++) {
+					if (currentNode.getNeighbour(i) != null) {
+						if (!visitedNodes.containsKey(currentNode.getNeighbour(i).getKey())) {
+							visited = false;
+						}
+					}
+				}
+				// If all nodes are visited, recurse back
+				if (visited) {
+					//current node complete, put in list
+					visitedNodes.put(currentNode.getKey(), currentNode);
+					// move to previous node
+					currentNode = currentNode.getPrevious();
+				}
+				// If not all not nodes are visited
+				else {
+					boolean b = false;
+					while (!b) {
+						//arraylist to store directions
+						ArrayList<Integer> dirs = new ArrayList<Integer>();
+						for (int i = 0; i < Maze.NUM_DIR; i++) {
+							if (currentNode.neighbour[i] != null) {
+								if (!visitedNodes.containsKey(currentNode.neighbour[i].getKey())) {
+									dirs.add(i);
+								}
+							}
+						}
+						random = new Random();
+						int randomDirection;
+						randomDirection = random.nextInt(dirs.size());
+						int dir = dirs.get(randomDirection);
+
+						if (currentNode.getNeighbour(dir) != null) {
+							if (!visitedNodes.containsKey(currentNode.getNeighbour(dir).getKey())) {
+								
+								Node newNode = nodes.get(currentNode.getNeighbour(dir).getKey());
+								newNode.setPrevious(currentNode);
+								visitedNodes.put(currentNode.getKey(), currentNode);
+								currentNode = newNode;
+								b = true;
+							}
+						}
+
+					}
+				}
+			}
+		}
+		// Draw the last node.
+		maze.drawFtPrt(currentNode.getCell());
+		visitedNodes.put(currentNode.getKey(), currentNode);
+		currentNode.getPathLength();
+		//System.out.println("Path length of the solution is " + pathLength);
 	} // end of solveMaze()
-
 
 	@Override
 	public boolean isSolved() {
-		// The maze is solved when the solveMaze function stopped
 		return true;
-	} // end if isSolved()
+	}
 
 	@Override
 	public int cellsExplored() {
 		// TODO Auto-generated method stub
-		return visited.size();
-	} // end of cellsExplored()
-	
-   private class Node{
-      private String key;
-      private Cell cell;
-      private Node[] neighbour = new Node[7];
-      private Node previous;
+		return visitedNodes.size();
+	}
 
-      public Node(Cell cell){
-         this.cell = cell;
-         this.key = "[" + cell.c + "," + cell.r + "]";
-      }
-      public String getKey(){
-         return key;
-      }
-      public Cell getCell(){
-         return cell;
-      }
-      public void setNeighbour(Node node, int dir){
-         neighbour[dir] = node;
-      }
-      public Node getNeighbour(int dir){
-         return neighbour[dir];
-      }
-      public void setPrevious(Node node){
-         this.previous = node;
-      }
-      public Node getPrevious(){
-         return this.previous;
-      }
-      public void countPath(){
-         if(previous != null){
-            previous.countPath();
-            pathLength++;
-         }
-      }
-   }
+
+	//custom class to handle cells
+	private class Node {
+		private Cell cell;
+		private String key;
+	// Array of neighbouring nodes 6 direction for hexagonal maze + 1 tunnel (if any)
+		private Node[] neighbour = new Node[7];
+		private Node previous;
+
+		public Node(Cell cell) {
+			this.key = "[" + cell.c + "," + cell.r + "]";
+			this.cell = cell;
+		}
+
+		public void getPathLength() {
+			if (previous != null) {
+				previous.getPathLength();
+				solutionLength++;
+			}
+		}
+
+		public Cell getCell() {
+			return cell;
+		}
+
+		public String getKey() {
+			return key;
+		}
+
+		public void setNeighbour(Node node, int dir) {
+			neighbour[dir] = node;
+		}
+
+		public void setPrevious(Node node) {
+			this.previous = node;
+		}
+
+		public Node getNeighbour(int dir) {
+			return neighbour[dir];
+		}
+
+		public Node getPrevious() {
+			return this.previous;
+		}
+
+	}
 } // end of class RecursiveBackTrackerSolver
