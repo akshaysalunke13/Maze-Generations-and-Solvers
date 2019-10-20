@@ -9,6 +9,7 @@ package maze;
  * and same wall object are shared by two cell objects next to the wall.
  */
 public class Cell {
+	public boolean isVisited = false;
 	/**
 	 * row coordinate
 	 */
